@@ -37,7 +37,7 @@ class _ChatPageState extends State<ChatPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.receiveuserEmail),
-        backgroundColor: Colors.grey[400],
+        backgroundColor: Colors.blue[400],
       ),
       body: Column(children: [
         //messages
