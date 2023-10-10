@@ -23,6 +23,14 @@ class _ChatPageState extends State<ChatPage> {
   final ChatService _chatService = ChatService();
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
+  bool _isRecordingAudio = false;
+  bool _isSendingVideo = false;
+
+  Map<String, dynamic>? _selectedMessageData; // Store data of the selected message
+  bool _showReactionsMenu = false; // Control the visibility of reactions menu
+   final Map<String, String?> _selectedEmojis = {}; 
+
+
   void sendMessage() async {
     if (_messageController.text.isNotEmpty) {
       await _chatService.sendMessage(
@@ -31,21 +39,24 @@ class _ChatPageState extends State<ChatPage> {
       _messageController.clear();
     }
   }
+ 
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.receiveuserEmail),
-        backgroundColor: Colors.blue[400],
+        backgroundColor: Colors.grey[400],
       ),
       body: Column(children: [
         //messages
         Expanded(
           child: _buildMessageList(),
+          
         ),
         //user input
         _buildMessageInput(),
+        
       ]),
     );
   }
@@ -71,37 +82,72 @@ class _ChatPageState extends State<ChatPage> {
       },
     );
   }
+  
 
   //build message item
-  Widget _buildMessageItem(DocumentSnapshot document) {
+    Widget _buildMessageItem(DocumentSnapshot document) {
     Map<String, dynamic> data = document.data() as Map<String, dynamic>;
-    //align messages to right if sender is current user otherwise left
-    var alignment = (data['senderId'] == _firebaseAuth.currentUser!.uid)
-        ? Alignment.centerRight
-        : Alignment.centerLeft;
-    return Container(
-      //if there is no alignment everything will be in the middle
-      alignment: alignment,
+    String messageId = document.id; // Unique identifier for the message
+
+    // Check if a selected emoji is associated with this message
+    String? selectedEmoji = _selectedEmojis[messageId];
+
+    return GestureDetector(
+      onTap: () {
+        // Toggle reactions menu visibility on message click
+        // Navigator.of(context).pop('reactions');
+        setState(() {
+          _selectedMessageData = data;
+          _showReactionsMenu = !_showReactionsMenu;
+        });
+      },
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
-          crossAxisAlignment:
-              (data['senderId'] == _firebaseAuth.currentUser!.uid)
+          crossAxisAlignment: (data['senderId'] == _firebaseAuth.currentUser!.uid)
                   ? CrossAxisAlignment.end
                   : CrossAxisAlignment.start,
-          mainAxisAlignment: (data['senderId'] == _firebaseAuth.currentUser!.uid) ? MainAxisAlignment.end : MainAxisAlignment.start,
+          mainAxisAlignment: (data['senderId'] == _firebaseAuth.currentUser!.uid)
+              ? MainAxisAlignment.end
+              : MainAxisAlignment.start,
           children: [
             Text(data['senderEmail']),
             const SizedBox(height: 5,),
             ChatBubble(message: data['message']),
+            const SizedBox(height: 5,),
+            // Display selected emoji associated with this message
+            if (selectedEmoji != null)
+              Text(selectedEmoji, style: const TextStyle(fontSize: 24)),
+            // Display emoji reactions when _showReactionsMenu is true
+            if (_showReactionsMenu &&
+                data['reactions'] != null &&
+                data['reactions'].isNotEmpty)
+              Wrap(
+                spacing: 8, // Adjust spacing as needed
+                children: data['reactions'].map<Widget>((reaction) {
+                  return GestureDetector(
+                    onTap: () {
+                      // Handle reaction selection here
+                      setState(() {
+                        // Associate the selected emoji with this message
+                        
+                        _selectedEmojis[messageId] = reaction;
+                      });
+                    },
+                    child: Text(reaction, style: const TextStyle(fontSize: 24)),
+                  );
+                }).toList(),
+              ),
           ],
         ),
       ),
     );
   }
 
+
   //build message input
   Widget _buildMessageInput() {
+   
     return Row(children: [
       //textfield
       Expanded(
@@ -115,6 +161,36 @@ class _ChatPageState extends State<ChatPage> {
           ),
         ),
       ),
+       // Button for toggling between audio and video
+        Padding(
+          padding: const EdgeInsets.only(bottom: 13, left: 5),
+          child: IconButton(
+            onPressed: () {
+              setState(() {
+                // Toggle between audio and video mode
+                if (_isRecordingAudio) {
+                  _isRecordingAudio = false;
+                  _isSendingVideo = true;
+                } else {
+                  _isRecordingAudio = true;
+                  _isSendingVideo = false;
+                }
+              });
+            },
+            icon: _isRecordingAudio
+                ? Icon(
+                    Icons.videocam_outlined, // Display video icon
+                    size: 35,
+                    color: Colors.grey,
+                  )
+                : Icon(
+                    Icons.mic_outlined, // Display audio icon
+                    size: 35,
+                    color: Colors.grey,
+                  ),
+          ),
+        ),
+
       //send message button
       Expanded(
         
@@ -124,11 +200,12 @@ class _ChatPageState extends State<ChatPage> {
               onPressed: sendMessage,
               icon: const Icon(
                 Icons.arrow_forward_outlined,
-                size: 50,
+                size: 40,
                 color: Colors.grey,
               )),
         ),
       )
     ]);
   }
+  
 }

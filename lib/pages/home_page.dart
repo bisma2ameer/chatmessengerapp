@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../services/auth/auth_service.dart';
 import 'chat_page.dart';
+import 'grop_creation_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -16,6 +17,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
   //sign user out
    
   void signOut(){
@@ -30,10 +32,16 @@ class _HomePageState extends State<HomePage> {
         title: const Text('Home Page'), 
         backgroundColor: Colors.grey[400],
         actions: [
+          // new grp
+          IconButton(
+            onPressed: _buildUserList, // Add this
+            icon: const Icon(Icons.group), // Add an icon for group creation
+          ),
           //sign out button
           IconButton(onPressed: signOut, 
           icon: const Icon(Icons.logout)
-          )
+          ),
+          
         ],
       ),
       body: _buildUserList()
@@ -75,6 +83,7 @@ class _HomePageState extends State<HomePage> {
              );
       },
     );
+    
 
 
   }

@@ -22,8 +22,9 @@ class ChatService extends ChangeNotifier {
         senderEmail: currentUserEmail,
         receiverId: receiverId,
         message: messageTxt,
-        timestamp: timestamp);
+        timestamp: timestamp, reactions: ["\u{1F604}", "\u{1F601}", "\u{1F602}", "\u{1F607}"]);
 
+    
     //construct chat room id from current user id & receiver id (to ensure uniqueness)
     List<String> ids = [currentUserId, receiverId];
     ids.sort(); //sort is imp , sort the ids to esnure chat room id is same for any pair of users
@@ -52,4 +53,6 @@ class ChatService extends ChangeNotifier {
         .orderBy('timestamp', descending: false)
         .snapshots();
   }
+
+  void addReaction(param0, String reaction) {}
 }
